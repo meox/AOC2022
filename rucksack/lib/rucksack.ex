@@ -50,5 +50,4 @@ defmodule Rucksack do
       {String.to_charlist(a), String.to_charlist(b)}
     end)
   end
-
 end
