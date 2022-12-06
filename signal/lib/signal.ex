@@ -28,11 +28,14 @@ defmodule Signal do
       fn
         x, {n, acc} when length(acc) < marker_len - 1 ->
           {:cont, {n + 1, [x | acc]}}
+
         x, {n, acc} ->
           new_acc = [x | acc] |> Enum.take(marker_len)
+
           case is_start_marker(new_acc) do
             true ->
               {:halt, n + 1}
+
             false ->
               {:cont, {n + 1, new_acc}}
           end
@@ -41,7 +44,7 @@ defmodule Signal do
   end
 
   def is_start_marker(ls) do
-   length(Enum.uniq(ls)) == length(ls)
+    length(Enum.uniq(ls)) == length(ls)
   end
 
   def input(filename) do
