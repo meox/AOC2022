@@ -30,7 +30,7 @@ defmodule Trees do
       |> Enum.filter(fn {_, v} -> v end)
       |> Enum.count()
 
-    outer = 2 * cols + 2 * (rows - 2)
+    outer = 2 * (cols + rows - 2)
     inner + outer
   end
 
