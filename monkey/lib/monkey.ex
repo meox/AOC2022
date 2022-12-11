@@ -13,7 +13,7 @@ defmodule Monkey do
 
     state = create_state(script)
 
-    round(20, script, state, fn x -> :erlang.trunc(x / 3) end)
+    round(20, script, state, &div(&1, 3))
     |> monkey_business()
   end
 
