@@ -11,19 +11,8 @@ defmodule Regolith do
   def part1(filename) do
     input = filename |> input() |> as_map()
 
-    max_y =
-      input
-      |> Map.keys()
-      |> Enum.reduce(
-        0,
-        fn
-          {_, y}, my when y > my -> y
-          _, my -> my
-        end
-      )
-
     input
-    |> tetris(@sand, max_y + 1, :no_wall)
+    |> tetris(@sand, max_y(input) + 1, :no_wall)
     |> Map.values()
     |> Enum.filter(fn
       :o -> true
@@ -69,19 +58,8 @@ defmodule Regolith do
   def part2(filename) do
     input = filename |> input() |> as_map()
 
-    max_y =
-      input
-      |> Map.keys()
-      |> Enum.reduce(
-        0,
-        fn
-          {_, y}, my when y > my -> y
-          _, my -> my
-        end
-      )
-
     input
-    |> tetris(@sand, 2 + max_y, :wall)
+    |> tetris(@sand, 2 + max_y(input), :wall)
     |> Map.values()
     |> Enum.filter(fn
       :o -> true
@@ -108,6 +86,18 @@ defmodule Regolith do
               |> Enum.reduce(acc, fn p, acc -> Map.put(acc, p, :r) end)
           end
         )
+      end
+    )
+  end
+
+  def max_y(input) do
+    input
+    |> Map.keys()
+    |> Enum.reduce(
+      0,
+      fn
+        {_, y}, my when y > my -> y
+        _, my -> my
       end
     )
   end
