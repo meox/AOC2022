@@ -23,7 +23,7 @@ defmodule Regolith do
       )
 
     input
-    |> tetris(@sand, max_y + 1)
+    |> tetris(@sand, max_y + 1, :no_wall)
     |> Map.values()
     |> Enum.filter(fn
       :o -> true
@@ -32,63 +32,31 @@ defmodule Regolith do
     |> Enum.count()
   end
 
-  def tetris(m, {_x, y}, max_y) when y > max_y do
+  def tetris(m, {_x, y}, max_y, _vwall) when y > max_y do
     m
   end
 
-  def tetris(m, {x, y} = p, max_y) do
-
+  def tetris(m, p, max_y, vwall) do
     with nil <- Map.get(m, p, nil),
-          {true, _} <- {blocked(m, d(p), max_y), d(p)},
-          {true,_} <- {blocked(m, dl(p), max_y), dl(p)},
-          {true,_} <- {blocked(m, dr(p), max_y), dr(p)}
-          do
-            tetris(Map.put(m, p, :o), @sand, max_y)
-          else
-            {false, p} -> tetris(m, p, max_y)
-            :o -> m
-          end
-
-    case Map.get(m, {x, y}, nil) do
-      :o ->
-        m
-
-      _ ->
-        case blocked(m, {x, y + 1}, max_y) do
-          true ->
-            # try down left
-            case blocked(m, {x - 1, y + 1}, max_y) do
-              false ->
-                tetris(m, {x - 1, y + 1}, max_y)
-
-              true ->
-                # try down right
-                case blocked(m, {x + 1, y + 1}, max_y) do
-                  true ->
-                    # blocked
-                    tetris(Map.put(m, {x, y}, :o), @sand, max_y)
-
-                  false ->
-                    tetris(m, {x + 1, y + 1}, max_y)
-                end
-            end
-
-          false ->
-            tetris(m, {x, y + 1}, max_y)
-        end
+         {true, _} <- {blocked(m, d(p), max_y, vwall), d(p)},
+         {true, _} <- {blocked(m, dl(p), max_y, vwall), dl(p)},
+         {true, _} <- {blocked(m, dr(p), max_y, vwall), dr(p)} do
+      tetris(Map.put(m, p, :o), @sand, max_y, vwall)
+    else
+      {false, p} -> tetris(m, p, max_y, vwall)
+      :o -> m
+      :r -> m
     end
   end
 
   def d({x, y}), do: {x, y + 1}
-  def dl({x, y}), do: {x-1, y + 1}
-  def dr({x, y}), do: {x+1, y + 1}
+  def dl({x, y}), do: {x - 1, y + 1}
+  def dr({x, y}), do: {x + 1, y + 1}
 
+  def blocked(_m, {_x, max_y}, max_y, :wall), do: true
+  def blocked(_m, {_x, max_y}, max_y, :no_wall), do: false
 
-  def blocked(_m, {_x, max_y}, max_y) do
-    true
-  end
-
-  def blocked(m, pos, _max_y) do
+  def blocked(m, pos, _max_y, _) do
     case Map.get(m, pos, nil) do
       nil -> false
       _ -> true
@@ -113,7 +81,7 @@ defmodule Regolith do
       )
 
     input
-    |> tetris(@sand, 2 + max_y)
+    |> tetris(@sand, 2 + max_y, :wall)
     |> Map.values()
     |> Enum.filter(fn
       :o -> true
