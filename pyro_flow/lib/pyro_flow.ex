@@ -10,7 +10,7 @@ defmodule PyroFlow do
     max_rocks = 2022
 
     jet_seq = filename |> input()
-    {max_h, _m, _} = tetris(jet_seq, 0, 0, %{}, max_rocks, 0)
+    {max_h, _m, _} = tetris(jet_seq, 0, 0, %{}, max_rocks, [])
     # debug(m, max_h)
     max_h
   end
@@ -23,11 +23,11 @@ defmodule PyroFlow do
 
     jet_seq = filename |> input()
 
-    freqs = find_period(jet_seq, 3000)
-    vmax = Enum.max(freqs)
+    {_, _, levels} = tetris(jet_seq, 0, 0, %{}, 5000, [])
+    vmax = Enum.max(levels)
 
     {_, maxp} =
-      freqs
+      levels
       |> Enum.reduce(
         {0, []},
         fn
@@ -36,40 +36,26 @@ defmodule PyroFlow do
         end
       )
 
-    maxp |> Enum.reverse() |> IO.inspect()
+    s = maxp |> Enum.reverse()
 
-    freq = 348
+    [freq] =
+      s
+      |> Enum.drop(1)
+      |> Enum.zip(s)
+      |> Enum.map(fn {a, b} -> a - b end)
+      |> Enum.uniq()
 
+    freq = freq * 5
     mul_factor = trunc(max_rocks / freq)
 
-    {max_h1, _m, _} = tetris(jet_seq, 0, 0, %{}, freq, 0)
-    {max_h2, _m, _} = tetris(jet_seq, 0, 0, %{}, 2 * freq, 0)
+    {max_h1, _m, _} = tetris(jet_seq, 0, 0, %{}, freq, [])
+    {max_h2, _m, _} = tetris(jet_seq, 0, 0, %{}, 2 * freq, [])
     grh = max_h2 - max_h1
 
     remanins = rem(max_rocks - freq, freq)
-    {max_h3, _m, _} = tetris(jet_seq, 0, 0, %{}, remanins, 0)
+    {max_h3, _m, _} = tetris(jet_seq, 0, 0, %{}, remanins, [])
 
     grh * mul_factor + max_h3
-  end
-
-  def find_period(jet_seq, n) do
-    base = 1
-    {_max_h1, _, prev_level} = tetris(jet_seq, 0, 0, %{}, base, 0)
-    find_period(jet_seq, prev_level, base + 1, n, [prev_level])
-  end
-
-  def find_period(_jet_seq, _prev_level, _r, 0, ls) do
-    ls |> Enum.reverse()
-    # fs = ls |> Enum.reverse()
-    # fs
-    # |> Enum.drop(1)
-    # |> Enum.zip(fs)
-    # |> Enum.map(fn {a, b} -> a - b end)
-  end
-
-  def find_period(jet_seq, prev_level, r, n, ls) do
-    {_max_h, _m, level} = tetris(jet_seq, 0, 0, %{}, r, 0)
-    find_period(jet_seq, prev_level, r + 1, n - 1, [level | ls])
   end
 
   def debug(m, max_h) do
@@ -88,9 +74,9 @@ defmodule PyroFlow do
     |> IO.puts()
   end
 
-  def tetris(_jet_seq, _shape, max_h, m, 0, level), do: {max_h, m, level}
+  def tetris(_jet_seq, _shape, max_h, m, 0, levels), do: {max_h, m, Enum.reverse(levels)}
 
-  def tetris(jet_seq, shape, max_h, m, max_rocks, _level) do
+  def tetris(jet_seq, shape, max_h, m, max_rocks, levels) do
     {jet_seq, new_m, _new_x, y} =
       (max_h + 3)..0
       |> Enum.reduce_while(
@@ -114,7 +100,13 @@ defmodule PyroFlow do
     new_max_h = max(max_h, y + height(shape))
     {new_m, level} = cap(new_m, new_max_h)
 
-    tetris(jet_seq, rem(shape + 1, 5), new_max_h, new_m, max_rocks - 1, level)
+    new_levels =
+      case shape do
+        0 -> [level | levels]
+        _ -> levels
+      end
+
+    tetris(jet_seq, rem(shape + 1, 5), new_max_h, new_m, max_rocks - 1, new_levels)
   end
 
   def cap(m, max_h) do
